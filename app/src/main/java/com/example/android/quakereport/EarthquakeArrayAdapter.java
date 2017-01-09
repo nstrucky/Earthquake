@@ -21,7 +21,7 @@ import java.util.List;
 
 public class EarthquakeArrayAdapter extends ArrayAdapter {
 
-
+//test comment for git push
     private final String REGEX_STRING_SPLIT_SEPARATOR = "of";
 
     public EarthquakeArrayAdapter(Context context, List objects) {
