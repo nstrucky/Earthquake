@@ -1,5 +1,6 @@
 package com.example.android.quakereport;
 
+import android.net.Uri;
 import android.util.JsonReader;
 import android.util.Log;
 
@@ -7,9 +8,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by root on 1/7/17.
@@ -80,6 +89,87 @@ public final class QueryUtils {
         return earthquakes;
     }
 
+    public static URL buidURL() {
+        URL url = null;
+        final String BASE_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?";
+        final String PARAM_FORMAT = "format";
+        final String PARAM_LIMIT = "limit";
+        String limit = "15";
+        String format = "geojson";
 
+        Uri uri = Uri.parse(BASE_URL).buildUpon()
+                .appendQueryParameter(PARAM_FORMAT, format)
+                .appendQueryParameter(PARAM_LIMIT, limit)
+                .build();
+
+        try {
+            url = new URL(uri.toString());
+
+        } catch (MalformedURLException e) {
+            Log.e("TAG", "MalformedURL", e);
+        }
+
+        return url;
+
+    }
+    public static List<Earthquake> makeHttpRequest(URL url) {
+        HttpURLConnection httpURLConnection = null;
+        InputStream inputStream = null;
+        String jsonString = null;
+
+
+        try {
+            httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpURLConnection.setRequestMethod("GET");
+            httpURLConnection.connect();
+
+            if (httpURLConnection.getResponseCode() == 200) {
+                inputStream = httpURLConnection.getInputStream();
+                jsonString = readFromStream(inputStream);
+            }
+
+        } catch (IOException e) {
+            Log.e("TAG", "IOException", e);
+        } finally {
+            if (httpURLConnection != null) {
+                httpURLConnection.disconnect();
+            }
+
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return extractEarthquakes(jsonString);
+    }
+    public static String readFromStream(InputStream inputStream) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        String jsonResponse = "";
+        if (inputStream == null) {
+            return jsonResponse;
+        }
+
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(inputStream));
+
+        String line = null;
+
+        try {
+            while ((line = buffer.readLine()) != null) {
+
+                stringBuilder.append(line + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        jsonResponse = stringBuilder.toString();
+        Log.i("TAG", jsonResponse);
+
+        return jsonResponse;
+    }
 
 }

@@ -21,6 +21,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.StringBuilderPrinter;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -43,142 +44,62 @@ public class EarthquakeActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
 
-    List<Earthquake> earthquakes;
-
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-
-    }
+    List<Earthquake> earthquakes = new ArrayList<>();
+    EarthquakeArrayAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
 
-
-        JsonAsyncTask task = new JsonAsyncTask();
-        task.execute();
-
-
-    }
-
-    //    http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=15
-
-
-
-
-    private class JsonAsyncTask extends AsyncTask<Void, Void, String> {
-
-
-
-        @Override
-        protected String doInBackground(Void... params) {
-            HttpURLConnection httpURLConnection = null;
-            InputStream inputStream = null;
-            StringBuilder stringBuilder = new StringBuilder();
-            String jsonString = null;
-            URL url = buidURL();
-
-            try {
-                httpURLConnection = (HttpURLConnection) url.openConnection();
-                httpURLConnection.setRequestMethod("GET");
-                httpURLConnection.connect();
-
-                inputStream = httpURLConnection.getInputStream();
-                InputStreamReader reader = new InputStreamReader(inputStream);
-                BufferedReader buffer = new BufferedReader(reader);
-
-                String line = null;
-                while ((line = buffer.readLine()) != null) {
-
-                    stringBuilder.append(line + "\n");
-                }
-
-                jsonString = stringBuilder.toString();
-
-                Log.i(LOG_TAG, jsonString);
-
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "IOException", e);
-            } finally {
-                if (httpURLConnection != null) {
-                    httpURLConnection.disconnect();
-                }
-
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            return jsonString;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            earthquakes = QueryUtils.extractEarthquakes(s);
-            setListData();
-
-
-        }
-
-        private URL buidURL() {
-            URL url = null;
-            final String BASE_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?";
-            final String PARAM_FORMAT = "format";
-            final String PARAM_LIMIT = "limit";
-            String limit = "15";
-            String format = "geojson";
-
-            Uri uri = Uri.parse(BASE_URL).buildUpon()
-                    .appendQueryParameter(PARAM_FORMAT, format)
-                    .appendQueryParameter(PARAM_LIMIT, limit)
-                    .build();
-
-            try {
-                url = new URL(uri.toString());
-
-            } catch (MalformedURLException e) {
-                Log.e(LOG_TAG, "MalformedURL", e);
-            }
-
-            return url;
-
-        }
-    }
-
-
-
-    protected void setListData() {
         // Find a reference to the {@link ListView} in the layout
         final ListView earthquakeListView = (ListView) findViewById(R.id.list);
 
         // Create a new {@link ArrayAdapter} of earthquakes
 
-        final EarthquakeArrayAdapter adapter =
-                new EarthquakeArrayAdapter(getApplicationContext(), earthquakes);
+        mAdapter = new EarthquakeArrayAdapter(getApplicationContext(), earthquakes);
 
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
-        earthquakeListView.setAdapter(adapter);
+        earthquakeListView.setAdapter(mAdapter);
 
         earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Earthquake earthquake = (Earthquake) adapter.getItem(position);
+                Earthquake earthquake = (Earthquake) mAdapter.getItem(position);
                 Uri uri = Uri.parse(earthquake.getUrl());
                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                 startActivity(intent);
 
             }
         });
+
+        JsonAsyncTask task = new JsonAsyncTask();
+        task.execute();
+
+    }
+
+    //    http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=15
+
+
+    private class JsonAsyncTask extends AsyncTask<Void, Void, List<Earthquake>> {
+
+        @Override
+        protected List<Earthquake> doInBackground(Void... params) {
+
+            URL url = QueryUtils.buidURL();
+            return QueryUtils.makeHttpRequest(url);
+        }
+
+        @Override
+        protected void onPostExecute(List<Earthquake> s) {
+            super.onPostExecute(s);
+            mAdapter.clear();
+            if (s != null && !s.isEmpty()) {
+                mAdapter.addAll(s);
+            }
+        }
+
     }
 
 
