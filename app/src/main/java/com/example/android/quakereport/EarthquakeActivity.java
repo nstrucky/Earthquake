@@ -28,6 +28,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -43,13 +45,11 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     List<Earthquake> mEarthquakes = new ArrayList<>();
     EarthquakeArrayAdapter mAdapter;
     TextView emptyListTextView;
-    static ProgressBar progressBar;
+    ProgressBar progressBar;
+    Button mTryAgainButton;
 
     @Override
     public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
-
-        Log.i(LOG_TAG, "onCreateLoader()");
-
         return new JsonAsyncTaskLoader(this);
     }
 
@@ -57,11 +57,13 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     @Override
     public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
 
+        progressBar.setVisibility(View.GONE);
+        mTryAgainButton.setVisibility(View.GONE);
+
         mAdapter.clear();
         if (earthquakes != null && !earthquakes.isEmpty()) {
             mAdapter.addAll(earthquakes);
         }
-        progressBar.setVisibility(View.GONE);
         emptyListTextView.setText("No Data D:");
     }
 
@@ -80,8 +82,10 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         // Find a reference to the {@link ListView} in the layout
         final ListView earthquakeListView = (ListView) findViewById(R.id.list);
         emptyListTextView = (TextView) findViewById(R.id.textView_empty_list);
+
         // Create a new {@link ArrayAdapter} of mEarthquakes
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        mTryAgainButton = (Button) findViewById(R.id.button_tryAgain);
 
         mAdapter = new EarthquakeArrayAdapter(getApplicationContext(), mEarthquakes);
 
@@ -101,6 +105,15 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
             }
         });
 
+            startLoader();
+
+
+//        getLoaderManager().initLoader(0, null, this).forceLoad();
+//          forceLoad is needed to start the loadInBackground method
+
+    }
+
+    private void startLoader() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = manager.getActiveNetworkInfo();
 
@@ -110,14 +123,15 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         } else {
             progressBar.setVisibility(View.GONE);
             emptyListTextView.setText("No Internet Connection!!!");
+            mTryAgainButton.setVisibility(View.VISIBLE);
+            mTryAgainButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startLoader();
+                }
+            });
         }
-
-
-//        getLoaderManager().initLoader(0, null, this).forceLoad();
-//          forceLoad is needed to start the loadInBackground method
-
     }
-
 
 
     private static class JsonAsyncTaskLoader extends AsyncTaskLoader<List<Earthquake>> {

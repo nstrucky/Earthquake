@@ -19,13 +19,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_tryAgain"
         android:layout_centerInParent="true"
-        android:gravity="center"
-        android:id="@+id/textView_empty_list"/>
+
+        android:text="Try Again"
+        android:visibility="gone"
+        />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/textView_empty_list"
+            android:layout_above="@id/button_tryAgain"/>
+
+
+
 
     <ListView
         android:id="@+id/list"
