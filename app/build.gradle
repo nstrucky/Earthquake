@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.example.android.quakereport"
-        minSdkVersion 15
-        targetSdkVersion 23
+        minSdkVersion 21
+        targetSdkVersion 15
         versionCode 1
         versionName "1.0"
     }

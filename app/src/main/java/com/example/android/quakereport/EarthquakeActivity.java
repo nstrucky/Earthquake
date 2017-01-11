@@ -20,12 +20,17 @@ import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -37,24 +42,33 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
 
     List<Earthquake> mEarthquakes = new ArrayList<>();
     EarthquakeArrayAdapter mAdapter;
-
+    TextView emptyListTextView;
+    static ProgressBar progressBar;
 
     @Override
     public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
+
+        Log.i(LOG_TAG, "onCreateLoader()");
+
         return new JsonAsyncTaskLoader(this);
     }
 
 
     @Override
     public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+
         mAdapter.clear();
         if (earthquakes != null && !earthquakes.isEmpty()) {
             mAdapter.addAll(earthquakes);
         }
+        progressBar.setVisibility(View.GONE);
+        emptyListTextView.setText("No Data D:");
     }
 
     @Override
     public void onLoaderReset(Loader<List<Earthquake>> loader) {
+
+        Log.i(LOG_TAG, "onLoaderReset()");
 
     }
 
@@ -65,14 +79,16 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
 
         // Find a reference to the {@link ListView} in the layout
         final ListView earthquakeListView = (ListView) findViewById(R.id.list);
-
+        emptyListTextView = (TextView) findViewById(R.id.textView_empty_list);
         // Create a new {@link ArrayAdapter} of mEarthquakes
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         mAdapter = new EarthquakeArrayAdapter(getApplicationContext(), mEarthquakes);
 
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
         earthquakeListView.setAdapter(mAdapter);
+        earthquakeListView.setEmptyView(emptyListTextView);
 
         earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -85,18 +101,30 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
             }
         });
 
-        getLoaderManager().initLoader(0, null, this);
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+
+        if (networkInfo != null && networkInfo.isConnected() && networkInfo.isAvailable()) {
+            getLoaderManager().initLoader(0, null, this);
+
+        } else {
+            progressBar.setVisibility(View.GONE);
+            emptyListTextView.setText("No Internet Connection!!!");
+        }
+
+
 //        getLoaderManager().initLoader(0, null, this).forceLoad();
 //          forceLoad is needed to start the loadInBackground method
 
     }
+
+
 
     private static class JsonAsyncTaskLoader extends AsyncTaskLoader<List<Earthquake>> {
 
         public JsonAsyncTaskLoader(Context context) {
             super(context);
         }
-
 
         @Override
         protected void onStartLoading() {
@@ -111,7 +139,6 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
 
         @Override
         public List<Earthquake> loadInBackground() {
-
             URL url = QueryUtils.buidURL();
             return QueryUtils.makeHttpRequest(url);
 
