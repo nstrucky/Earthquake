@@ -15,37 +15,48 @@
  */
 package com.example.android.quakereport;
 
+import android.app.LoaderManager;
+import android.content.AsyncTaskLoader;
+import android.content.Context;
 import android.content.Intent;
+import android.content.Loader;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.util.StringBuilderPrinter;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import org.json.JSONObject;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EarthquakeActivity extends AppCompatActivity {
+public class EarthquakeActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Earthquake>> {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
 
-    List<Earthquake> earthquakes = new ArrayList<>();
+    List<Earthquake> mEarthquakes = new ArrayList<>();
     EarthquakeArrayAdapter mAdapter;
+
+
+    @Override
+    public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
+        return new JsonAsyncTaskLoader(this);
+    }
+
+
+    @Override
+    public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+        mAdapter.clear();
+        if (earthquakes != null && !earthquakes.isEmpty()) {
+            mAdapter.addAll(earthquakes);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<Earthquake>> loader) {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +66,9 @@ public class EarthquakeActivity extends AppCompatActivity {
         // Find a reference to the {@link ListView} in the layout
         final ListView earthquakeListView = (ListView) findViewById(R.id.list);
 
-        // Create a new {@link ArrayAdapter} of earthquakes
+        // Create a new {@link ArrayAdapter} of mEarthquakes
 
-        mAdapter = new EarthquakeArrayAdapter(getApplicationContext(), earthquakes);
+        mAdapter = new EarthquakeArrayAdapter(getApplicationContext(), mEarthquakes);
 
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
@@ -74,34 +85,37 @@ public class EarthquakeActivity extends AppCompatActivity {
             }
         });
 
-        JsonAsyncTask task = new JsonAsyncTask();
-        task.execute();
+        getLoaderManager().initLoader(0, null, this);
+//        getLoaderManager().initLoader(0, null, this).forceLoad();
+//          forceLoad is needed to start the loadInBackground method
 
     }
 
-    //    http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=15
+    private static class JsonAsyncTaskLoader extends AsyncTaskLoader<List<Earthquake>> {
 
+        public JsonAsyncTaskLoader(Context context) {
+            super(context);
+        }
 
-    private class JsonAsyncTask extends AsyncTask<Void, Void, List<Earthquake>> {
 
         @Override
-        protected List<Earthquake> doInBackground(Void... params) {
+        protected void onStartLoading() {
+            super.onStartLoading();
+            forceLoad();//done hear so not chained method after initLoader()
+        }
+
+        @Override
+        protected void onForceLoad() {
+            super.onForceLoad();
+        }
+
+        @Override
+        public List<Earthquake> loadInBackground() {
 
             URL url = QueryUtils.buidURL();
             return QueryUtils.makeHttpRequest(url);
-        }
 
-        @Override
-        protected void onPostExecute(List<Earthquake> s) {
-            super.onPostExecute(s);
-            mAdapter.clear();
-            if (s != null && !s.isEmpty()) {
-                mAdapter.addAll(s);
-            }
         }
-
     }
-
-
 
 }
