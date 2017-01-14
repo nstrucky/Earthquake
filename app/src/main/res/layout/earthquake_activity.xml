@@ -37,9 +37,6 @@
             android:id="@+id/textView_empty_list"
             android:layout_above="@id/button_tryAgain"/>
 
-
-
-
     <ListView
         android:id="@+id/list"
         android:orientation="vertical"

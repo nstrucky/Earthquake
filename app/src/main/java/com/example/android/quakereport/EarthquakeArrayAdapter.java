@@ -24,8 +24,13 @@ public class EarthquakeArrayAdapter extends ArrayAdapter {
 //test comment for git push
     private final String REGEX_STRING_SPLIT_SEPARATOR = "of";
 
+    private Context mContext;
+
+
     public EarthquakeArrayAdapter(Context context, List objects) {
         super(context, 0, objects);
+
+        mContext = context;
     }
 
 
@@ -50,7 +55,7 @@ public class EarthquakeArrayAdapter extends ArrayAdapter {
             relativeLocation = stringSplit[0].trim() + " of";
             cityStateName = stringSplit[1].trim();
         } else {
-            relativeLocation = getContext().getString(R.string.near_the);
+            relativeLocation = mContext.getString(R.string.near_the);
             cityStateName = stringSplit[0].trim();
         }
 

@@ -49,9 +49,6 @@ public final class QueryUtils {
         // Create an empty ArrayList that we can start adding mEarthquakes to
         ArrayList<Earthquake> earthquakes = new ArrayList<>();
 
-        // Try to parse the SAMPLE_JSON_RESPONSE. If there's a problem with the way the JSON
-        // is formatted, a JSONException exception object will be thrown.
-        // Catch the exception so the app doesn't crash, and print the error message to the logs.
         try {
             JSONObject jsonObject = new JSONObject(jsonToParse);
             JSONArray earthquakesAsFeatures = jsonObject.getJSONArray("features");
@@ -81,17 +78,22 @@ public final class QueryUtils {
         return earthquakes;
     }
 
-    public static URL buidURL() {
+    public static URL buidURL(String minMagnitude) {
         URL url = null;
         final String BASE_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?";
         final String PARAM_FORMAT = "format";
         final String PARAM_LIMIT = "limit";
-        String limit = "1000";
-        String format = "geojson";
+        final String PARAM_MINMAG = "minmag";
+        final String PARAM_ORDER = "orderby";
+        String order_value = "time";
+        String limit_value = "1000";
+        String format_value = "geojson";
 
         Uri uri = Uri.parse(BASE_URL).buildUpon()
-                .appendQueryParameter(PARAM_FORMAT, format)
-                .appendQueryParameter(PARAM_LIMIT, limit)
+                .appendQueryParameter(PARAM_FORMAT, format_value)
+                .appendQueryParameter(PARAM_LIMIT, limit_value)
+                .appendQueryParameter(PARAM_MINMAG, minMagnitude)
+                .appendQueryParameter(PARAM_ORDER, order_value)
                 .build();
 
         try {

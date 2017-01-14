@@ -20,12 +20,16 @@ import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -48,30 +52,24 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     ProgressBar progressBar;
     Button mTryAgainButton;
 
+
     @Override
-    public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
-        return new JsonAsyncTaskLoader(this);
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
     }
 
-
     @Override
-    public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+    public boolean onOptionsItemSelected(MenuItem item) {
 
-        progressBar.setVisibility(View.GONE);
-        mTryAgainButton.setVisibility(View.GONE);
+        int id = item.getItemId();
 
-        mAdapter.clear();
-        if (earthquakes != null && !earthquakes.isEmpty()) {
-            mAdapter.addAll(earthquakes);
+        if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
         }
-        emptyListTextView.setText("No Data D:");
-    }
-
-    @Override
-    public void onLoaderReset(Loader<List<Earthquake>> loader) {
-
-        Log.i(LOG_TAG, "onLoaderReset()");
-
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -106,11 +104,6 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         });
 
             startLoader();
-
-
-//        getLoaderManager().initLoader(0, null, this).forceLoad();
-//          forceLoad is needed to start the loadInBackground method
-
     }
 
     private void startLoader() {
@@ -133,11 +126,45 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         }
     }
 
+    @Override
+    public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String minMagnitude = sharedPreferences.getString(getString(R.string.settings_min_magnitude_key),
+                                    getString(R.string.settings_min_magnitude_default));
+
+
+        return new JsonAsyncTaskLoader(this, minMagnitude);
+    }
+
+
+    @Override
+    public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+
+        progressBar.setVisibility(View.GONE);
+        mTryAgainButton.setVisibility(View.GONE);
+
+        mAdapter.clear();
+        if (earthquakes != null && !earthquakes.isEmpty()) {
+            mAdapter.addAll(earthquakes);
+        }
+        emptyListTextView.setText("No Data D:");
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<Earthquake>> loader) {
+
+        Log.i(LOG_TAG, "onLoaderReset()");
+
+    }
 
     private static class JsonAsyncTaskLoader extends AsyncTaskLoader<List<Earthquake>> {
 
-        public JsonAsyncTaskLoader(Context context) {
+        private String mMinMagnitude;
+
+        public JsonAsyncTaskLoader(Context context, String minMagnitude) {
             super(context);
+            mMinMagnitude = minMagnitude;
         }
 
         @Override
@@ -147,13 +174,8 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         }
 
         @Override
-        protected void onForceLoad() {
-            super.onForceLoad();
-        }
-
-        @Override
         public List<Earthquake> loadInBackground() {
-            URL url = QueryUtils.buidURL();
+            URL url = QueryUtils.buidURL(mMinMagnitude);
             return QueryUtils.makeHttpRequest(url);
 
         }
