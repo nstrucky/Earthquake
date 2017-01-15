@@ -133,8 +133,11 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         String minMagnitude = sharedPreferences.getString(getString(R.string.settings_min_magnitude_key),
                                     getString(R.string.settings_min_magnitude_default));
 
+        String orderByPref = sharedPreferences.getString(getString(R.string.settings_order_by_key),
+                                                        getString(R.string.settings_order_by_default));
 
-        return new JsonAsyncTaskLoader(this, minMagnitude);
+
+        return new JsonAsyncTaskLoader(this, minMagnitude, orderByPref);
     }
 
 
@@ -161,10 +164,12 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     private static class JsonAsyncTaskLoader extends AsyncTaskLoader<List<Earthquake>> {
 
         private String mMinMagnitude;
+        private String mOrderByPref;
 
-        public JsonAsyncTaskLoader(Context context, String minMagnitude) {
+        public JsonAsyncTaskLoader(Context context, String minMagnitude, String orderByPref) {
             super(context);
             mMinMagnitude = minMagnitude;
+            mOrderByPref = orderByPref;
         }
 
         @Override
@@ -175,7 +180,7 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
 
         @Override
         public List<Earthquake> loadInBackground() {
-            URL url = QueryUtils.buidURL(mMinMagnitude);
+            URL url = QueryUtils.buidURL(mMinMagnitude, mOrderByPref);
             return QueryUtils.makeHttpRequest(url);
 
         }

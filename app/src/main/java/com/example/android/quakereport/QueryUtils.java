@@ -78,14 +78,14 @@ public final class QueryUtils {
         return earthquakes;
     }
 
-    public static URL buidURL(String minMagnitude) {
+    public static URL buidURL(String minMagnitude, String orderByPref) {
         URL url = null;
         final String BASE_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?";
         final String PARAM_FORMAT = "format";
         final String PARAM_LIMIT = "limit";
         final String PARAM_MINMAG = "minmag";
         final String PARAM_ORDER = "orderby";
-        String order_value = "time";
+        String order_value = orderByPref;
         String limit_value = "1000";
         String format_value = "geojson";
 

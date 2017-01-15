@@ -2,6 +2,7 @@ package com.example.android.quakereport;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -24,7 +25,6 @@ public class SettingsActivity extends AppCompatActivity {
             Preference.OnPreferenceChangeListener {
 
 
-
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -33,20 +33,8 @@ public class SettingsActivity extends AppCompatActivity {
             Preference minMagnitude = findPreference(getString(R.string.settings_min_magnitude_key));
             bindPreferenceSummaryToValue(minMagnitude);
 
-
-
-//            minMagnitude.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference, Object newValue) {
-//                    preference.setSummary(newValue.toString());
-//
-//                    return true;
-//                }
-//            });
-//
-//            You could do this, but it would be more efficient to have a helper method that binds
-//            all of your preferences to listeners and summary values rather than create
-//            anonymous inner local classes for each one.
+            Preference orderBy = findPreference(getString(R.string.settings_order_by_key));
+            bindPreferenceSummaryToValue(orderBy);
 
         }
 
@@ -58,15 +46,30 @@ public class SettingsActivity extends AppCompatActivity {
             String preferenceString = sharedPreferences.getString(preference.getKey(), "");
             onPreferenceChange(preference, preferenceString);
 
-
-
         }
 
 
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
-            //See helper method bindPreferenceSummaryToValue(Preference preference)
-            preference.setSummary(newValue.toString());
+
+//          If we don't do this, then the summary would be set to actual values instead
+//          of the formatted labels for each
+            if (preference instanceof ListPreference) {
+
+                ListPreference listPreference = (ListPreference) preference;
+                int index = listPreference.findIndexOfValue(newValue.toString());
+                CharSequence[] entries = listPreference.getEntries();
+                if (index >= 0) {
+                    preference.setSummary(entries[index]);
+                }
+
+            } else {
+                //See helper method bindPreferenceSummaryToValue(Preference preference)
+                preference.setSummary(newValue.toString());
+            }
+
+
+
 
             return true;
         }
